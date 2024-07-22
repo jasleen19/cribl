@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "cribl"
+version = "0.1.0"
+description = "Log Agent"
+authors = ["Jasleen Kaur <jasleenkaur1909@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.111.1"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.5.2"
+pyright = "^1.1.372"
+
+[tool.ruff]
+line-length = 120
+
+[tool.poe.tasks]
+install = "poetry install"
+lint = "ruff check"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
