@@ -29,6 +29,9 @@ lint = "ruff check"
 dev = "fastapi dev ./app/server.py"
 prod = "fastapi run ./app/server.py"
 build = "docker build -t cribl ."
+up = "docker-compose up -d --force-recreate"
+down = "docker-compose down"
+logs = "docker-compose logs -f"
 rm = "docker image rm cribl"
 
 [build-system]
