@@ -27,6 +27,8 @@ test = "python -m pytest"
 lint = "ruff check"
 dev = "fastapi dev ./app/server.py"
 prod = "fastapi run ./app/server.py"
+build = "docker build -t cribl ."
+rm = "docker image rm cribl"
 
 [build-system]
 requires = ["poetry-core"]
