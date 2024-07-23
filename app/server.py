@@ -35,7 +35,7 @@ if SECONDARIES:
                     f"http://{secondary}:8000/logs",
                     params=params,
                 ) as r:
-                    async for text in r.iter_text():
+                    async for text in r.aiter_text():
                         yield text
         except ReadTimeout as e:
             yield f"Error during streaming: {str(e)}"
