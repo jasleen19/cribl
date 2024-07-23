@@ -9,7 +9,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 # Thread pool with same number of workers as CPU cores
-thread_pool_exc = ThreadPoolExecutor(max_workers=8)
+thread_pool_exc = ThreadPoolExecutor()
 
 secondaries = os.getenv("secondaries", "")
 SECONDARIES: set[str] = {s for s in secondaries.split(",") if s}
@@ -32,7 +32,7 @@ if SECONDARIES:
             async with httpx.AsyncClient() as client:
                 async with client.stream(
                     "GET",
-                    f"http://{secondary}:8000/logs",
+                    f"http://{secondary}/logs",
                     params=params,
                 ) as r:
                     async for text in r.aiter_text():

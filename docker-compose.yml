@@ -8,7 +8,7 @@ services:
     networks:
       - cluster
     environment:
-      - secondaries=secondary-1,secondary-2,secondary-3
+      - secondaries=secondary-1:8000,secondary-2:8000,secondary-3:8000
   secondary-1:
     image: cribl
     ports:
