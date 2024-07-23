@@ -1,10 +1,15 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from app.logs import search_log, find_log
-from typing import Iterator
+from typing import AsyncGenerator
 import os
 import httpx
 from httpx import ReadTimeout
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+# Thread pool with same number of workers as CPU cores
+thread_pool_exc = ThreadPoolExecutor(max_workers=8)
 
 secondaries = os.getenv("secondaries", "")
 SECONDARIES: set[str] = {s for s in secondaries.split(",") if s}
@@ -12,25 +17,26 @@ app = FastAPI()
 
 if SECONDARIES:
 
-    def get_logs_from_secondary(
+    async def get_logs_from_secondary(
         secondary: str,
         filename: str,
         keyword: str | None = None,
         n: int | None = None,
-    ):
+    ) -> AsyncGenerator[str, None]:
         params = {"filename": filename}
         if n:
             params["n"] = n
         if keyword:
             params["keyword"] = keyword
         try:
-            with httpx.stream(
-                "GET",
-                f"http://{secondary}:8000/logs",
-                params=params,
-            ) as r:
-                for text in r.iter_text():
-                    yield text
+            async with httpx.AsyncClient() as client:
+                async with client.stream(
+                    "GET",
+                    f"http://{secondary}:8000/logs",
+                    params=params,
+                ) as r:
+                    async for text in r.iter_text():
+                        yield text
         except ReadTimeout as e:
             yield f"Error during streaming: {str(e)}"
             # https://github.com/encode/starlette/discussions/1739#discussioncomment-3094935
@@ -60,14 +66,18 @@ if SECONDARIES:
         )
 else:
 
-    def get_logs(
+    async def get_logs(
         log_file: str,
         keyword: str | None,
         n: str | None,
-    ) -> Iterator[str]:
+    ) -> AsyncGenerator[str, None]:
         try:
-            for log in search_log(log_file, keyword, n):
-                yield log + "\n"
+            # Reading file is a IO blocking operation and doesn't work well with asyncio
+            # so we use a thread pool executor to run it in a separate thread to
+            # avoid blocking the main thread which is running the event loop
+            lines = await asyncio.get_event_loop().run_in_executor(thread_pool_exc, search_log, log_file, keyword, n)
+            for line in lines:
+                yield line + "\n"
         except TypeError as e:
             yield f"Error during streaming: {str(e)}"
             # https://github.com/encode/starlette/discussions/1739#discussioncomment-3094935
