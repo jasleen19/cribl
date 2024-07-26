@@ -1,19 +1,37 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
+from contextlib import asynccontextmanager
 from app.logs import search_log, find_log
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Callable
 import os
 import httpx
 from httpx import ReadTimeout
-import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from queue import Queue
+import asyncio
+import time
 
-# Thread pool with same number of workers as CPU cores
-thread_pool_exc = ThreadPoolExecutor()
+DEMO_SLOW_STREAM = os.getenv("DEMO_SLOW_STREAM", "false")
+SECONDARIES_ENV = os.getenv("SECONDARIES", "")
+SECONDARIES: set[str] = {s for s in SECONDARIES_ENV.split(",") if s}
 
-secondaries = os.getenv("secondaries", "")
-SECONDARIES: set[str] = {s for s in secondaries.split(",") if s}
-app = FastAPI()
+DEFAULT_CHUNK_SIZE = 10
+
+thread_pool_exc = ThreadPoolExecutor(max_workers=4)
+
+
+client = httpx.AsyncClient()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    print("Shutting down thread pool executor...")
+    thread_pool_exc.shutdown(wait=True)
+
+
+app = FastAPI(lifespan=lifespan)
+
 
 if SECONDARIES:
 
@@ -35,8 +53,13 @@ if SECONDARIES:
                     f"http://{secondary}/logs",
                     params=params,
                 ) as r:
-                    async for text in r.aiter_text():
-                        yield text
+                    buffer = ""
+                    async for line in r.aiter_lines():
+                        if DEMO_SLOW_STREAM == "true":
+                            print("Primary")
+                        yield line + "\n"
+                    if buffer:
+                        yield buffer
         except ReadTimeout as e:
             yield f"Error during streaming: {str(e)}"
             # https://github.com/encode/starlette/discussions/1739#discussioncomment-3094935
@@ -66,23 +89,34 @@ if SECONDARIES:
         )
 else:
 
-    async def get_logs(
-        log_file: str,
-        keyword: str | None,
-        n: str | None,
-    ) -> AsyncGenerator[str, None]:
+    def data_producer(
+        q: Queue,
+        fn: Callable,
+        *args,
+        **kwargs,
+    ) -> None:
         try:
-            # Reading file is a IO blocking operation and doesn't work well with asyncio
-            # so we use a thread pool executor to run it in a separate thread to
-            # avoid blocking the main thread which is running the event loop
-            lines = await asyncio.get_event_loop().run_in_executor(thread_pool_exc, search_log, log_file, keyword, n)
-            for line in lines:
-                yield line + "\n"
+            for data in fn(*args, **kwargs):
+                if DEMO_SLOW_STREAM == "true":
+                    time.sleep(1)
+                    print("File pointer")
+                q.put(data)
         except TypeError as e:
-            yield f"Error during streaming: {str(e)}"
-            # https://github.com/encode/starlette/discussions/1739#discussioncomment-3094935
-            # Starlette (used by FastAPI) does not support HTTP response trailers.
-            return
+            q.put(f"Error during streaming: {str(e)}")
+        finally:
+            q.put(None)
+
+    def data_consumer(
+        q: Queue,
+    ):
+        while True:
+            data = q.get()
+            if DEMO_SLOW_STREAM == "true":
+                print("Secondary")
+            if data is None:
+                break
+
+            yield data + "\n"
 
     @app.get("/logs")
     async def logs_handler(
@@ -97,11 +131,21 @@ else:
         except FileNotFoundError as e:
             raise HTTPException(status_code=404, detail=str(e))
 
+        q = Queue()
+
+        asyncio.get_running_loop().run_in_executor(
+            thread_pool_exc,
+            data_producer,
+            q,
+            search_log,
+            log_file,
+            keyword,
+            n,
+        )
+
         return StreamingResponse(
-            get_logs(
-                log_file,
-                keyword,
-                n,
+            data_consumer(
+                q,
             ),
             media_type="text/plain",
         )
