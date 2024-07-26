@@ -28,11 +28,36 @@ test = "python -m pytest"
 lint = "ruff check"
 dev = "fastapi dev ./app/server.py"
 prod = "fastapi run ./app/server.py"
+
+## Large demo
+p = "bash -c 'SECONDARIES=127.0.0.1:8001 fastapi run app/server.py --port 8000'"
+s = "bash -c 'fastapi run app/server.py --port 8001'"
+c = """
+curl -N  \
+  'http://127.0.0.1:8000/logs?hostname=127.0.0.1:8001&filename=dummy.log&n=10000' \ 
+  -H 'accept: text/plain'
+"""
+
+# Slowed down large demo
+slow_p = "bash -c 'SECONDARIES=127.0.0.1:8001 DEMO_SLOW_STREAM=true fastapi run app/server.py --port 8000'"
+slow_s = "bash -c 'DEMO_SLOW_STREAM=true fastapi run app/server.py --port 8001'"
+slow_c = """
+curl -N  \
+  'http://127.0.0.1:8000/logs?hostname=127.0.0.1:8001&filename=dummy.log&n=10000' \ 
+  -H 'accept: text/plain'
+"""
+
 build = "docker build -t cribl ."
+rm = "docker image rm cribl"
+
 up = "docker-compose up -d --force-recreate"
 down = "docker-compose down"
 logs = "docker-compose logs -f"
-rm = "docker image rm cribl"
+curl = """
+curl -N  \
+  'http://0.0.0.0:8000/logs?hostname=secondary-2:8000&filename=alternatives.log&n=60' \ 
+  -H 'accept: text/plain'
+"""
 
 [build-system]
 requires = ["poetry-core"]
