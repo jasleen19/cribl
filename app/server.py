@@ -53,13 +53,10 @@ if SECONDARIES:
                     f"http://{secondary}/logs",
                     params=params,
                 ) as r:
-                    buffer = ""
                     async for line in r.aiter_lines():
                         if DEMO_SLOW_STREAM == "true":
                             print("Primary")
                         yield line + "\n"
-                    if buffer:
-                        yield buffer
         except ReadTimeout as e:
             yield f"Error during streaming: {str(e)}"
             # https://github.com/encode/starlette/discussions/1739#discussioncomment-3094935
