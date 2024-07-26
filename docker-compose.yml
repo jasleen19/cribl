@@ -15,18 +15,24 @@ services:
       - "8001:8000"
     networks:
       - cluster
+    volumes:
+      - ./log_files:/var/log
   secondary-2:
     image: cribl
     ports:
       - "8002:8000"
     networks:
       - cluster
+    volumes:
+      - ./log_files:/var/log
   secondary-3:
     image: cribl
     ports:
       - "8003:8000"
     networks:
       - cluster
+    volumes:
+      - ./log_files:/var/log
 networks:
   cluster:
     driver: bridge
