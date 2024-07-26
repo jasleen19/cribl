@@ -3,6 +3,6 @@ __pycache__
 .pytest_cache
 .ruff_cache
 .coverage
-.vscode
+
 .venv
 log_files/
