@@ -29,6 +29,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
+@app.get("/")
+async def healthcheck():
+    return {"detail": "ok"}
+
+
 def data_producer(
     q: Queue,
     fn: Callable,

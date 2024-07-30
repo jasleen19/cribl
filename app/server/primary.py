@@ -29,6 +29,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
+@app.get("/")
+async def healthcheck():
+    return {"detail": "ok"}
+
+
 async def get_logs_from_secondary(
     secondary: str,
     filename: str,
@@ -44,7 +49,7 @@ async def get_logs_from_secondary(
         async with httpx.AsyncClient() as client:
             async with client.stream(
                 "GET",
-                f"http://{secondary}/logs",
+                f"https://{secondary}/logs",
                 params=params,
             ) as r:
                 async for line in r.aiter_lines():
