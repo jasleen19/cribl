@@ -26,12 +26,12 @@ line-length = 120
 install = "poetry install"
 test = "python -m pytest"
 lint = "ruff check"
-dev = "fastapi dev ./app/server.py"
-prod = "fastapi run ./app/server.py"
+dev = "fastapi dev ./app/server/primary.py"
+prod = "fastapi run ./app/server/primary.py"
 
 ## Large demo
-p = "bash -c 'SECONDARIES=127.0.0.1:8001 fastapi run app/server.py --port 8000'"
-s = "bash -c 'fastapi run app/server.py --port 8001'"
+p = "bash -c 'SECONDARIES=127.0.0.1:8001 fastapi dev app/server/primary.py --port 8000'"
+s = "bash -c 'fastapi dev app/server/secondary.py --port 8001'"
 c = """
 curl -N  \
   'http://127.0.0.1:8000/logs?hostname=127.0.0.1:8001&filename=dummy.log&n=10000' \ 
@@ -39,8 +39,8 @@ curl -N  \
 """
 
 # Slowed down large demo
-slow_p = "bash -c 'SECONDARIES=127.0.0.1:8001 DEMO_SLOW_STREAM=true fastapi run app/server.py --port 8000'"
-slow_s = "bash -c 'DEMO_SLOW_STREAM=true fastapi run app/server.py --port 8001'"
+slow_p = "bash -c 'SECONDARIES=127.0.0.1:8001 DEMO_SLOW_STREAM=true fastapi dev app/server/primary.py --port 8000'"
+slow_s = "bash -c 'DEMO_SLOW_STREAM=true fastapi dev app/server/secondary.py --port 8001'"
 slow_c = """
 curl -N  \
   'http://127.0.0.1:8000/logs?hostname=127.0.0.1:8001&filename=dummy.log&n=10000' \ 
