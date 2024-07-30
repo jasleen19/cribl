@@ -1,0 +1,22 @@
+# flyctl launch added from .gitignore
+**/.DS_Store
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.coverage
+
+**/.venv
+**/log_files
+
+# flyctl launch added from .pytest_cache/.gitignore
+# Created by pytest automatically.
+.pytest_cache/**/*
+
+# flyctl launch added from .ruff_cache/.gitignore
+# Automatically created by ruff.
+.ruff_cache/**/*
+
+# flyctl launch added from .venv/.gitignore
+# created by virtualenv automatically
+.venv/**/*
+fly.toml
