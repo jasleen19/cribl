@@ -7,7 +7,7 @@ on:
       - main
 jobs:
   deploy_primary:
-    name: Deploy app
+    name: Deploy Cribl Primary
     runs-on: ubuntu-latest
     concurrency: deploy-group    # optional: ensure only one action runs at a time
     steps:
@@ -18,7 +18,7 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_PRIMARY_TOKEN }}
 
   deploy_secondary:
-    name: Deploy app
+    name: Deploy Cribl-1 Secondary
     runs-on: ubuntu-latest
     concurrency: deploy-group    # optional: ensure only one action runs at a time
     steps:
