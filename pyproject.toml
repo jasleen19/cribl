@@ -26,8 +26,7 @@ line-length = 120
 install = "poetry install"
 test = "python -m pytest"
 lint = "ruff check"
-dev = "fastapi dev ./app/server/primary.py"
-prod = "fastapi run ./app/server/primary.py"
+run = "python main.py"
 
 ## Large demo
 p = "bash -c 'SECONDARIES=127.0.0.1:8001 fastapi dev app/server/primary.py --port 8000'"
