@@ -23,7 +23,7 @@ client = httpx.AsyncClient()
 async def lifespan(app: FastAPI):
     yield
     print("Shutting down thread pool executor...")
-    thread_pool_exc.shutdown(wait=True)
+    thread_pool_exc.shutdown(wait=False)
 
 
 app = FastAPI(lifespan=lifespan)

@@ -70,8 +70,8 @@ def read_log(
 
             # Process the lines in reverse order, except for the remainder part
             for line in reversed(lines):
-                yield line.decode("utf-8")
+                yield line.decode("utf-8", errors="ignore")
 
         # After exiting the loop, yield the remainder if there is any
         if remainder:
-            yield remainder.decode("utf-8")
+            yield remainder.decode("utf-8", errors="ignore")

@@ -71,7 +71,6 @@
 ### Reliability
 - File reading is a blocking operation
     - Using a Thread Pool Executor to read the file in a separate thread is one way to manage this blocking operation in an async task (i.e., FastAPI handler)
-    - However, this means that careful selection of the number of max workers is required which is usually the max number of CPU cores
     - If the rate of requests is large and the workers are unavailable, the server will start queueing requests which will increase API latency or cause HTTP timeout (if configured), eventually causing the server to crash due to increase in memory usage
     - If the workers scale well with the expected requests load, the other bottleneck could be the Disk I/O
 - If error happens during streaming, the server can recover but cannot propagate the error to the client using standard HTTP error codes. It can only send it as part of the streaming response
