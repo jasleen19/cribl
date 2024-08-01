@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for cribl-1 on 2024-07-29T20:58:41-07:00
+# fly.toml app configuration file generated for cribl-1 on 2024-08-01T13:41:20-07:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -7,6 +7,10 @@ app = 'cribl-1'
 primary_region = 'sea'
 
 [build]
+
+[[mounts]]
+  source = 'ext_logs'
+  destination = '/data'
 
 [http_service]
   internal_port = 8000
@@ -19,7 +23,3 @@ primary_region = 'sea'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
-
-[mounts]
-  source = "../log_files"
-  destination = "/var/log/"
