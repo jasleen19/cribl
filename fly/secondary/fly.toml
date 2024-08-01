@@ -19,3 +19,7 @@ primary_region = 'sea'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
+
+[mounts]
+  source = "../log_files"
+  destination = "/var/log/"
