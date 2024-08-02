@@ -5,7 +5,7 @@ from app.logs import search_log, find_log
 from typing import Callable
 import httpx
 from concurrent.futures import ThreadPoolExecutor
-from queue import Queue
+from queue import Queue, Full, Empty
 import asyncio
 import time
 import os
@@ -13,6 +13,7 @@ import os
 
 DEMO_SLOW_STREAM = os.getenv("DEMO_SLOW_STREAM", "false")
 DEFAULT_CHUNK_SIZE = 1024**3  # 1 MB
+BUFFER_SIZE = 10
 thread_pool_exc = ThreadPoolExecutor(max_workers=4)
 
 
@@ -45,7 +46,13 @@ def data_producer(
             if DEMO_SLOW_STREAM == "true":
                 time.sleep(1)
                 print("File pointer")
-            q.put(data)
+            while True:
+                try:
+                    q.put(data, timeout=5)
+                    break
+                except Full:
+                    print("Buffer full, exiting thread...")
+                    return
     except TypeError as e:
         q.put(f"Error during streaming: {str(e)}")
     finally:
@@ -56,7 +63,11 @@ def data_consumer(
     q: Queue,
 ):
     while True:
-        data = q.get()
+        try:
+            data = q.get(timeout=5)
+        except Empty:
+            print("Breaking stream...")
+            break
         if DEMO_SLOW_STREAM == "true":
             print("Secondary")
         if data is None:
@@ -78,7 +89,7 @@ async def logs_handler(
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-    q = Queue()
+    q = Queue(maxsize=BUFFER_SIZE)
 
     asyncio.get_running_loop().run_in_executor(
         thread_pool_exc,
