@@ -69,14 +69,18 @@
 - No authentication/authorization
 
 ### Reliability
-- File reading is a blocking operation
-    - Using a Thread Pool Executor to read the file in a separate thread is one way to manage this blocking operation in an async task (i.e., FastAPI handler)
-    - If the rate of requests is large and the workers are unavailable, the server will start queueing requests which will increase API latency or cause HTTP timeout (if configured), eventually causing the server to crash due to increase in memory usage
-    - If the workers scale well with the expected requests load, the other bottleneck could be the Disk I/O
+- File reading, typically a CPU non-blocking I/O operation, becomes a blocking operation when stdlib's `open`, `read`, `seek`, etc. are called in asyncio. Those functions are not "cooperative" and are therefore syncronous code rather than coroutines
+    - Using a Thread Pool Executor to read the file in a separate thread is one way to manage this blocking operation away from an asyncio task (i.e., FastAPI handler)
+    - If the rate of requests is large and the thread pool workers are unavailable, the server will start queueing requests which will increase API latency or cause HTTP timeout (if configured), eventually causing the server to crash due to increase in memory usage
+    - If the max workers are setup well to scale with the expected requests load, the other bottleneck could be the Disk I/O. This will result in the thread pool workers spending a lot of time waiting for the disk to respond. This will also eventually cause the thread pool to run out of workers and the server to crash
 - If error happens during streaming, the server can recover but cannot propagate the error to the client using standard HTTP error codes. It can only send it as part of the streaming response
     - This is because HTTP Response codes are sent as Response Headers BEFORE streaming begins. This is expected as per the HTTP spec
     - The server can send the error code as a Response Trailer as per the HTTP spec. However, most Python HTTP frameworks (FastAPI/Starlette in our case) implement ASGI spec and the ASGI spec [does not support HTTP Trailers](https://github.com/encode/starlette/discussions/1739#discussioncomment-3094935)
 
 ### Observability
-- Not logging server logs into log files
+- Not logging server logs into log files. Relying on stdio/stderr
 - No observability per request/response i.e., no tracing across primary and secondaries to filter the logs
+- No metrics/alerting/dashboard
+    - System level (docker containers) - CPU, memory, disk usage, network connections
+    - Service level (http server) - availability, latency, error rate, volume
+    - Application level - custom metrics e.g., empty thread pool, queue timeout, etc., 
