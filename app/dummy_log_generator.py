@@ -10,7 +10,6 @@ def create_large_log_file(filepath, target_size_gb, chunk_size_mb=10):
     target_size_bytes = target_size_gb * 1024**3
     chunk_size_bytes = chunk_size_mb * 1024**2
     current_size = 0
-    i = 0
     with open(filepath, "wb") as file:
         while current_size < target_size_bytes:
             # Generate a chunk of repetitive data
